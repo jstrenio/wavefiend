@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const {WebhookClient} = require('dialogflow-fulfillment');
-const FEED_URL = 'https://www.ndbc.noaa.gov/data/latest_obs/46248.rss';
+//const FEED_URL = 'https://www.ndbc.noaa.gov/data/latest_obs/46248.rss';
 const DATA_TXT = 'https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt'
 var fetchUrl = require("fetch").fetchUrl;
 const app = express();
@@ -29,9 +29,9 @@ const orford_weather_url = 'https://api.openweathermap.org/data/2.5/weather?q=Po
 const wa_weather_url = 'https://api.openweathermap.org/data/2.5/weather?q=Westport,US-WA&appid=08a3eef5a760269c1005985126793ea0';
 const nor_cal_weather_url = 'https://api.openweathermap.org/data/2.5/weather?q=Eureka,US-CA&appid=08a3eef5a760269c1005985126793ea0';
 
-app.post('/dialogflow-fulfillment', (request, response) => {
-    dialogflowFulfillment(request, response)
-})
+// app.post('/dialogflow-fulfillment', (request, response) => {
+//     dialogflowFulfillment(request, response)
+// })
 
 app.post('/', (request, response) => {
     dialogflowFulfillment(request, response)
@@ -159,7 +159,7 @@ const dialogflowFulfillment = (request, response) => {
         }
         agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees.');
         agent.add('the current water temperature is ' + (surf_data[18] * 1.8 + 32));
-        agent.add(' as of ' + hour + ':' + surf_data[7] + ' PST on ' + surf_data[4] + '/' + surf_data[5]);
+        //agent.add(' as of ' + hour + ':' + surf_data[7] + ' PST on ' + surf_data[4] + '/' + surf_data[5]);
     }
 
     function weather_report(agent) {
