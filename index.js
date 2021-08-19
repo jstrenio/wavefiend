@@ -128,6 +128,7 @@ const dialogflowFulfillment = (request, response) => {
     }
 
     function surf_report(agent) {
+
         switch(agent.parameters.surf_spot) {
             case 'seaside':
                 surf_data = seaside_data;
@@ -157,9 +158,10 @@ const dialogflowFulfillment = (request, response) => {
         else {
             hour = 24 - 7;
         }
-        agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees.');
-        agent.add('the current water temperature is ' + (surf_data[18] * 1.8 + 32));
+        agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees. '
+                    + 'the current water temperature is ' + (surf_data[18] * 1.8 + 32));
         //agent.add(' as of ' + hour + ':' + surf_data[7] + ' PST on ' + surf_data[4] + '/' + surf_data[5]);
+
     }
 
     function weather_report(agent) {
