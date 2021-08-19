@@ -1,7 +1,11 @@
+// John Strenio
+// CS510 Voice Assistants
+// Professor Caterina Paun
+// Final Project 
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const {WebhookClient} = require('dialogflow-fulfillment');
-//const FEED_URL = 'https://www.ndbc.noaa.gov/data/latest_obs/46248.rss';
 const DATA_TXT = 'https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt'
 var fetchUrl = require("fetch").fetchUrl;
 const app = express();
@@ -29,20 +33,15 @@ const orford_weather_url = 'https://api.openweathermap.org/data/2.5/weather?q=Po
 const wa_weather_url = 'https://api.openweathermap.org/data/2.5/weather?q=Westport,US-WA&appid=08a3eef5a760269c1005985126793ea0';
 const nor_cal_weather_url = 'https://api.openweathermap.org/data/2.5/weather?q=Eureka,US-CA&appid=08a3eef5a760269c1005985126793ea0';
 
-// app.post('/dialogflow-fulfillment', (request, response) => {
-//     dialogflowFulfillment(request, response)
-// })
-
 app.post('/', (request, response) => {
     dialogflowFulfillment(request, response)
 })
-
 app.listen(port, () => {
     console.log(`Listening on port ${port}`)
 })
 
 function refreshData() {
-    // this function retrieves the latest global buoy observations 
+    // this function retrieves the latest global buoy observations, NOAA updates them hourly
     fetchUrl(DATA_TXT, function(error, meta, body){
         var report = body.toString().split("\n");
         for (var i = 0; i < report.length; i++)
@@ -116,10 +115,11 @@ function refreshData() {
     });
 }
 
+// retrieve weather and buoy data
 refreshData();
 setInterval(function() {
     refreshData();
-}, 2*10000000) // fetch fresh observations every 6 hours
+}, 3600000) // fetch fresh observations every hour
 
 
 const dialogflowFulfillment = (request, response) => {
@@ -127,9 +127,10 @@ const dialogflowFulfillment = (request, response) => {
     var surf_data;
 
     function sayHello(agent){
-        agent.add("Hey! Welcome to Surf Fiend, your surf report assistant");
+        agent.add("Hey! Welcome to PNW surf, your surfing voice assistant for the Pacific North West, ask for the surf conditions or weather for a surf spot or coastal city in the PNW");
     }
 
+    // produce a surf report with the buoy data from the desired location
     function surf_report(agent) {
 
         switch(agent.parameters.surf_spot) {
@@ -153,6 +154,7 @@ const dialogflowFulfillment = (request, response) => {
                 break;
         }
 
+        // so there's no negative hours
         var hour;
         var raw_hour = surf_data[6];
         if (raw_hour > 6) {
@@ -161,14 +163,24 @@ const dialogflowFulfillment = (request, response) => {
         else {
             hour = 24 - 7;
         }
-        agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees. '
-                    + 'the current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32) + ' degrees. Would you like to hear the weather as well?');
 
+        // speak report
+        agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees. '
+                    + 'The current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32) + ' degrees. Would you like to hear the weather as well?');
     }
 
+    // api call for weather report at desired region
     function weather_report(agent) {
+
+        // retrieve context if they already asked about a surf spot
+        var surf_spot = String(agent.contexts[0].parameters.surf_spot);
+        if (!surf_spot) {
+            surf_spot = agent.parameters.surf_spot;
+        }
+
+        // retrieve the corresponding weather forecast
         var weather_report;
-        switch(agent.parameters.surf_spot) {
+        switch(surf_spot) {
             case 'seaside':
                 weather_report = seaside_weather_report;
                 break;
@@ -189,14 +201,15 @@ const dialogflowFulfillment = (request, response) => {
                 break;
         }
 
-        agent.add('Weather for ' + agent.parameters.surf_spot + ' area, ' + weather_report.weather[0].description + ' with a temperature of ' + parseInt((weather_report.main.temp - 273) * 1.8 + 32)
-                    + ' with a ' + parseInt(weather_report.wind.speed) + ' mph wind at an angle of ' + weather_report.wind.deg + ' degrees.');
+        // speak the weather
+        agent.add('Current weather around ' + surf_spot + ', ' + weather_report.weather[0].description + ' with a temperature of ' + parseInt((weather_report.main.temp - 273) * 1.8 + 32)
+                    + ' degrees with a ' + parseInt(weather_report.wind.speed) + ' mph wind at an angle of ' + weather_report.wind.deg + ' degrees.');
     }
 
     let intentMap = new Map();
     intentMap.set("Default Welcome Intent", sayHello)
     intentMap.set("surf_report", surf_report)
     intentMap.set("weather_report", weather_report)
-    intentMap.set("surf_report - yes", weather_report)
+    intentMap.set("surf_report_yes", weather_report)
     agent.handleRequest(intentMap)
 }
