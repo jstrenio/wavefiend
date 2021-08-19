@@ -159,7 +159,7 @@ const dialogflowFulfillment = (request, response) => {
             hour = 24 - 7;
         }
         agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees. '
-                    + 'the current water temperature is ' + (surf_data[18] * 1.8 + 32));
+                    + 'the current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32));
         //agent.add(' as of ' + hour + ':' + surf_data[7] + ' PST on ' + surf_data[4] + '/' + surf_data[5]);
 
     }
