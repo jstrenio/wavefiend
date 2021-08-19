@@ -89,7 +89,7 @@ function refreshData() {
         }
     });
 
-    // fetch weather reports from beaches (dialogflow timeout limit forces precaching these)
+    // fetch weather reports from beaches (dialogflow timeout makes precaching these every few hours best)
     var weather_url = seaside_weather_url;
     fetchUrl(weather_url, function(error, meta, body){
         seaside_weather_report = JSON.parse(body);
@@ -162,7 +162,7 @@ const dialogflowFulfillment = (request, response) => {
             hour = 24 - 7;
         }
         agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees. '
-                    + 'the current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32) + ' degrees.');
+                    + 'the current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32) + ' degrees. Would you like to hear the weather as well?');
 
     }
 
@@ -197,5 +197,6 @@ const dialogflowFulfillment = (request, response) => {
     intentMap.set("Default Welcome Intent", sayHello)
     intentMap.set("surf_report", surf_report)
     intentMap.set("weather_report", weather_report)
+    intentMap.set("surf_report - yes", weather_report)
     agent.handleRequest(intentMap)
 }
