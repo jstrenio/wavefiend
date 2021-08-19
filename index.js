@@ -41,83 +41,86 @@ app.listen(port, () => {
     console.log(`Listening on port ${port}`)
 })
 
-// request(DATA_TXT, function (error, response, body) {
-//     console.log('body:', body); // Print the HTML for the Google homepage.
-// });
-
-// this function retrieves the latest global buoy observations 
-fetchUrl(DATA_TXT, function(error, meta, body){
-    var report = body.toString().split("\n");
-    for (var i = 0; i < report.length; i++)
-    {
-        var line = report[i];
+function refreshData() {
+    // this function retrieves the latest global buoy observations 
+    fetchUrl(DATA_TXT, function(error, meta, body){
+        var report = body.toString().split("\n");
+        for (var i = 0; i < report.length; i++)
         {
-            // seaside buoy
-            if (line.indexOf("46248") != -1) 
+            var line = report[i];
             {
-                seaside_data = line.split(' ');
-                seaside_data = seaside_data.filter(e =>  e);
-            }
-            // pipeline buoy
-            else if (line.indexOf("51201") != -1) 
-            {
-                pipeline_data = line.split(' ');
-                pipeline_data = pipeline_data.filter(e =>  e);
-            }
-            // central oregon buoy
-            else if (line.indexOf("46229") != -1) 
-            {
-                kiwanda_data = line.split(' ');
-                kiwanda_data = kiwanda_data.filter(e =>  e);
-            }
-            // southern washington buoy
-            else if (line.indexOf("46211") != -1) 
-            {
-                orford_data = line.split(' ');
-                orford_data = orford_data.filter(e =>  e);
-            }
-            // northern california
-            else if (line.indexOf("46213") != -1) 
-            {
-                nor_cal_data = line.split(' ');
-                nor_cal_data = nor_cal_data.filter(e =>  e);
-            }
-            // southern washington
-            else if (line.indexOf("46243") != -1) 
-            {
-                wa_data = line.split(' ');
-                wa_data = wa_data.filter(e =>  e);
+                // seaside buoy
+                if (line.indexOf("46248") != -1) 
+                {
+                    seaside_data = line.split(' ');
+                    seaside_data = seaside_data.filter(e =>  e);
+                }
+                // pipeline buoy
+                else if (line.indexOf("51201") != -1) 
+                {
+                    pipeline_data = line.split(' ');
+                    pipeline_data = pipeline_data.filter(e =>  e);
+                }
+                // central oregon buoy
+                else if (line.indexOf("46229") != -1) 
+                {
+                    kiwanda_data = line.split(' ');
+                    kiwanda_data = kiwanda_data.filter(e =>  e);
+                }
+                // southern washington buoy
+                else if (line.indexOf("46211") != -1) 
+                {
+                    orford_data = line.split(' ');
+                    orford_data = orford_data.filter(e =>  e);
+                }
+                // northern california
+                else if (line.indexOf("46213") != -1) 
+                {
+                    nor_cal_data = line.split(' ');
+                    nor_cal_data = nor_cal_data.filter(e =>  e);
+                }
+                // southern washington
+                else if (line.indexOf("46243") != -1) 
+                {
+                    wa_data = line.split(' ');
+                    wa_data = wa_data.filter(e =>  e);
+                }
             }
         }
-    }
-});
+    });
 
+    // fetch weather reports from beaches (dialogflow timeout limit forces precaching these)
+    var weather_url = seaside_weather_url;
+    fetchUrl(weather_url, function(error, meta, body){
+        seaside_weather_report = JSON.parse(body);
+    });
+    var weather_url = pipeline_weather_url;
+    fetchUrl(weather_url, function(error, meta, body){
+        pipeline_weather_report = JSON.parse(body);
+    });
+    var weather_url = orford_weather_url;
+    fetchUrl(weather_url, function(error, meta, body){
+        orford_weather_report = JSON.parse(body);
+    });
+    var weather_url = kiwanda_weather_url;
+    fetchUrl(weather_url, function(error, meta, body){
+        kiwanda_weather_report = JSON.parse(body);
+    });
+    var weather_url = wa_weather_url;
+    fetchUrl(weather_url, function(error, meta, body){
+        wa_weather_report = JSON.parse(body);
+    });
+    var weather_url = nor_cal_weather_url;
+    fetchUrl(weather_url, function(error, meta, body){
+        nor_cal_weather_report = JSON.parse(body);
+    });
+}
 
-// fetch weather reports from beaches (dialogflow timeout limit forces precaching these)
-var weather_url = seaside_weather_url;
-fetchUrl(weather_url, function(error, meta, body){
-    seaside_weather_report = JSON.parse(body);
-});
-var weather_url = pipeline_weather_url;
-fetchUrl(weather_url, function(error, meta, body){
-    pipeline_weather_report = JSON.parse(body);
-});
-var weather_url = orford_weather_url;
-fetchUrl(weather_url, function(error, meta, body){
-    orford_weather_report = JSON.parse(body);
-});
-var weather_url = kiwanda_weather_url;
-fetchUrl(weather_url, function(error, meta, body){
-    kiwanda_weather_report = JSON.parse(body);
-});
-var weather_url = wa_weather_url;
-fetchUrl(weather_url, function(error, meta, body){
-    wa_weather_report = JSON.parse(body);
-});
-var weather_url = nor_cal_weather_url;
-fetchUrl(weather_url, function(error, meta, body){
-    nor_cal_weather_report = JSON.parse(body);
-});
+refreshData();
+setInterval(function() {
+    refreshData();
+}, 2*10000000) // fetch fresh observations every 6 hours
+
 
 const dialogflowFulfillment = (request, response) => {
     const agent = new WebhookClient({request, response})
@@ -159,8 +162,7 @@ const dialogflowFulfillment = (request, response) => {
             hour = 24 - 7;
         }
         agent.add('primary swell is ' + surf_data[11] + ' feet at ' + surf_data[12] + ' seconds with a swell angle of ' + surf_data[14] + ' degrees. '
-                    + 'the current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32));
-        //agent.add(' as of ' + hour + ':' + surf_data[7] + ' PST on ' + surf_data[4] + '/' + surf_data[5]);
+                    + 'the current water temperature is ' + parseInt(surf_data[18] * 1.8 + 32) + ' degrees.');
 
     }
 
